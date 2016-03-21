@@ -40,6 +40,8 @@ class SchemaKey:
         self.name = name
         self._fields = list(fields)
         self.partial = None
+        self.combines = combines
+        self._instance = None
 
         if combines is not None:
             if isinstance(combines, tuple) or \
@@ -48,25 +50,26 @@ class SchemaKey:
                 self.partial = self._combine_tuples(self.name, self._fields, \
                         combines)
                 # sets our _fields attr to the correct value
-                self._combine_fields(combines)
+                self._fields = self._combine_fields(self._fields, combines)
                 
             else:
                 # raise error
                 pass
 
-
-    def _combine_fields(self, combines):
+    @classmethod
+    def _combine_fields(cls, fields, *combines):
         """ Used to set the _fields on our insance to all of the fields from the combines
             that are passed in.  We store these fields on the instance so that a new/empty
             namedtuple can be created from the fields if needed.
         """
+        if not isinstance(fields, list):
+            fields = list(fields)
         if isinstance(combines, list) or isinstance(combines, tuple):
             for combo in combines:
-                self._fields += [f for f in combo._fields if f not in self._fields]
-        else:
-            self._fields += [f for f in combo._fields if f not in self._fields]
+                if hasattr(combo, '_fields'):
+                    fields += [f for f in combo._fields if f not in fields]
 
-        return
+        return fields
 
 
     @classmethod
@@ -92,12 +95,13 @@ class SchemaKey:
             # continue
             dct = {}
             for comb in combines:
-                # update our fields list with the fields of the tuple
-                fields += list(comb._fields)
-                # update the values in our dct so we can return a 
-                # partial namedtuple with the values from our other
-                # classes.
-                dct.update(comb._asdict())
+                if hasattr(comb, '_fields'):
+                    # update our fields list with the fields of the tuple
+                    fields += list(comb._fields)
+                    # update the values in our dct so we can return a 
+                    # partial namedtuple with the values from our other
+                    # classes.
+                    dct.update(comb._asdict())
 
             # create a new namedtuple with all of our fields
             new_tuple = namedtuple(name, fields)
@@ -106,15 +110,10 @@ class SchemaKey:
             # the tuples we've combined.  This allows us to only have to 
             # specify values for any of the new fields we've added.
             return partial(new_tuple, **dct)
-        
-        else:
-            # error
-            pass
-
-        return
 
     #:TODO: rename this to clean_tuple or something. 
-    def new_tuple(self, name):
+    @classmethod
+    def new_tuple(cls, name, fields):
         """ This allows to create a named tuple that is not a partial with all of 
             our needed fields. Can be useful if you want to specify a different value
             for field than the original key that got combined with this one.  The order
@@ -137,21 +136,37 @@ class SchemaKey:
                         FreshKey(name='Fresh Id', id='Fresh Name')
                         
         """
-        return namedtuple(name, self._fields)
+        return namedtuple(name, fields)
+
+    def __repr__(self):
+        if self._instance is not None:
+            return self._instance
+        else:
+            return '<SchemaKey: {}>'.format(self.name)
 
     def __call__(self, *args, **kwargs):
-        """ Return our namedtuple populated with the *args, or **kwargs. 
+        """ Return a namedtuple populated with the *args, or **kwargs. 
             This allows us to use as follows.
             :ex:
                 >>> S = SchemaKey('S', 'id', 'name') # creates a namedtuple 'S' with fields 'id', 'name'
                 >>> s = S('Id', 'Name')
                 >>> print(s)
                 S(id='Id', name='Name')
+
+
+            :NOTE:  once you call/populate the namedtuple you loose all of the above methods,
+                    because this returns a namedtuple, not a SchemaKey. The SchemaKey class
+                    is only meant to be around as a helper object.
         """
+        if self._instance is not None:
+            return self._instance
+
         if self.partial is not None:
-            return self.partial(*args, **kwargs)
+            self._instance = self.partial(*args, **kwargs)
         else:
-            new_tuple = self.new_tuple(self.name)
-            return new_tuple(*args, **kwargs)
+            new_tuple = self.new_tuple(self.name, self._fields)
+            self._instance = new_tuple(*args, **kwargs)
+
+        return self._instance
 
 

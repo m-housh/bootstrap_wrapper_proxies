@@ -1,2 +1,4 @@
 play.py
 *.un~
+
+.coverage
