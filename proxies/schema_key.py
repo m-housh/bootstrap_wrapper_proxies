@@ -44,14 +44,11 @@ class SchemaKey:
         self._instance = None
 
         if combines is not None:
-            if isinstance(combines, tuple) or \
-                    isinstance(combines, list):
-                
+            if isinstance(combines, (tuple, list)):
                 self.partial = self._combine_tuples(self.name, self._fields, \
                         combines)
                 # sets our _fields attr to the correct value
                 self._fields = self._combine_fields(self._fields, combines)
-                
             else:
                 # raise error
                 pass
@@ -111,9 +108,8 @@ class SchemaKey:
             # specify values for any of the new fields we've added.
             return partial(new_tuple, **dct)
 
-    #:TODO: rename this to clean_tuple or something. 
     @classmethod
-    def new_tuple(cls, name, fields):
+    def _new_tuple(cls, name, fields):
         """ This allows to create a named tuple that is not a partial with all of 
             our needed fields. Can be useful if you want to specify a different value
             for field than the original key that got combined with this one.  The order
@@ -137,12 +133,15 @@ class SchemaKey:
                         
         """
         return namedtuple(name, fields)
+   
+    def clean_tuple(self, name):
+        """ Returns a new instance of SchemaKey, with all the fields, but none of the 
+            combined values. 
+        """
+        return SchemaKey(name, *self._fields)
 
     def __repr__(self):
-        if self._instance is not None:
-            return self._instance
-        else:
-            return '<SchemaKey: {}>'.format(self.name)
+        return '<SchemaKey: {}>'.format(self.name)
 
     def __call__(self, *args, **kwargs):
         """ Return a namedtuple populated with the *args, or **kwargs. 
@@ -152,19 +151,14 @@ class SchemaKey:
                 >>> s = S('Id', 'Name')
                 >>> print(s)
                 S(id='Id', name='Name')
-
-
-            :NOTE:  once you call/populate the namedtuple you loose all of the above methods,
-                    because this returns a namedtuple, not a SchemaKey. The SchemaKey class
-                    is only meant to be around as a helper object.
         """
         if self._instance is not None:
-            return self._instance
+            self._instance = None
 
         if self.partial is not None:
             self._instance = self.partial(*args, **kwargs)
         else:
-            new_tuple = self.new_tuple(self.name, self._fields)
+            new_tuple = self._new_tuple(self.name, self._fields)
             self._instance = new_tuple(*args, **kwargs)
 
         return self._instance

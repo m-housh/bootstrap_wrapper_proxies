@@ -21,6 +21,8 @@ class SchemaKeyTestCase(TestCase):
     def test_call(self):
         key = Key('Id', 'Name')
         self.assertTupleEqual(key, ('Id', 'Name'))
+        different = Key('Different Id', 'DifferentName')
+        self.assertTupleEqual(different, ('Different Id', 'DifferentName'))
 
 
     def test_combines(self):
@@ -29,13 +31,17 @@ class SchemaKeyTestCase(TestCase):
         self.assertTupleEqual(a, ('Another', 'Id', 'Name'))
 
     def test_combine_fields_on_non_list(self):
-        X = SchemaKey('X', 'x',)
-        x = X('X')
-        print('x._fields', x._fields)
-        y = SchemaKey._combine_fields([], x, key)
+        y = SchemaKey._combine_fields('x', key)
         self.assertListEqual(y, ['x', 'id','name'])
 
     def test_new_tuple(self):
-        NewKey = Key.new_tuple('NewKey', Key._fields)
+        NewKey = Key._new_tuple('NewKey', Key._fields)
         new_key = NewKey('New Id','New Name')
         self.assertTupleEqual(new_key, ('New Id', 'New Name'))
+
+    def test_clean_tuple(self):
+        NewKey = Key.clean_tuple('NewKey')
+        self.assertTrue(isinstance(NewKey, SchemaKey))
+        self.assertEqual(NewKey._fields, Key._fields)
+        self.assertIsNone(NewKey.partial)
+        self.assertIsNone(NewKey._instance)
