@@ -52,7 +52,6 @@ class Labels(SchemaLabelProtocol):
 class SchemaLabelProtocolTestCase(TestCase):
 
     def test_labels_errors_if_not_implemented(self):
-
         try:
             class Test(SchemaLabelProtocol):
                 pass
@@ -64,25 +63,39 @@ class SchemaLabelProtocolTestCase(TestCase):
         class NewLabels(Labels):
             _labels = Labels.labels.new_child().update({'id': 'New Id', \
                     'fn': 'New First Name', 'ln': 'New Last Name'})
-
-
         self.assertEqual(NewLabels.labels['id'], 'New Id')
         self.assertNotEqual(Labels.labels['id'], NewLabels.labels['id'])
         
 
-    def test_labels_without_context(self):
+    def test_subclasses_get_new_context(self):
         class Test(Labels):
             pass
 
         self.assertEqual(Test.labels, Labels.labels)
-        # updates on Test show up in Labels since they reference the same object
+        # if updated outside of class they get pushed to new context
         Test.labels.update({'id': 'Test Id'})
-        self.assertEqual(Labels.labels['id'], 'Test Id')
+        self.assertEqual(Labels.labels['id'], 'Id')
 
+        class Test1(SchemaLabelProtocol):
+            _labels = SchemaMap(Labels._labels)
+        
+        # wrong way to update
+        class Test2(Test):
+            _labels = Test1._labels.update({'id': 'Test2 Id'})
+
+        self.assertEqual(Test1.labels['id'], Test2.labels['id'])
+
+        class Test3(Test2):
+            pass
+        
+        # right way or use new_child (see test_labels_in_context test.)
+        Test3.labels.update({'id': 'Test3 Id'})
+        self.assertNotEqual(Test3.labels['id'], Test2.labels['id'])
     
     def test_schema_label_meta_transforms_dict_to_schema_map(self):
         class Test(SchemaLabelProtocol):
             _labels = {'id': 'Id'}
-        t = Test()
 
-        self.assertIsInstance(t.labels, SchemaMap)
+        self.assertIsInstance(Test.labels, SchemaMap)
+
+
