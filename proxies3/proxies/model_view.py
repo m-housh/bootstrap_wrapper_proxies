@@ -8,7 +8,7 @@ from .schema_key import SchemaLabelProtocol, SchemaLabelMeta
 class ViewContextMap(BaseChainMap):
     pass
 
-class ModelView:
+class ModelViewProxy:
 
     def __init__(self, modelClass, **kwargs):
         if not isinstance(modelClass, (SchemaLabelMeta, SchemaLabelProtocol)):
@@ -27,10 +27,3 @@ class ModelView:
         # parent class
         self.labels = self._model_class.labels.new_child()
 
-
-class FormViewProxy:
-    _form_ctx = ViewContextMap()
-
-    def __init__(self, modelView, form):
-        self.model_view = modelView
-        self.form = form

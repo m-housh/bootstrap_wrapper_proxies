@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from proxies import SchemaLabelProtocol, ModelView
+from proxies import SchemaLabelProtocol, ModelViewProxy
 
 
 class Labeled(SchemaLabelProtocol):
@@ -10,7 +10,7 @@ class NotLabeled:
     pass
 
 
-my_model_view = ModelView(Labeled)
+my_model_view = ModelViewProxy(Labeled)
 
 class ModelViewTestCase(TestCase):
 
@@ -20,7 +20,7 @@ class ModelViewTestCase(TestCase):
 
     def test_error_raised_for_class_that_does_not_implement_schema_label_protocol(self):
         try:
-            model_view = ModelView(NotLabeled)
+            model_view = ModelViewProxy(NotLabeled)
         except TypeError as e:
             self.assertIsNotNone(e)
 
@@ -29,7 +29,7 @@ class ModelViewTestCase(TestCase):
         self.assertEqual(my_model_view._model_class, Labeled) 
 
         labeled = Labeled()
-        model_view2 = ModelView(labeled)
+        model_view2 = ModelViewProxy(labeled)
         self.assertEqual(model_view2._model_class, Labeled)
 
     def test_model_view_attributes(self):
