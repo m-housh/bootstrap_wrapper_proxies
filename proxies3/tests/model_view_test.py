@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from proxies import SchemaLabelProtocol, ModelViewProxy
+from proxies import SchemaLabelProtocol, ModelViewProxy, ViewContext
 
 
 class Labeled(SchemaLabelProtocol):
@@ -37,5 +37,35 @@ class ModelViewTestCase(TestCase):
         # test that the model_view get's it's own context for labels
         my_model_view.labels.update({'id': 'New Id'})
         self.assertNotEqual(Labeled.labels['id'], my_model_view.labels['id'])
+        self.assertEqual(my_model_view._view_ctx['labels'], my_model_view.labels)
     
+    def test_register_context_method_raises_error_if_context_not_dict(self):
+        try:
+            my_model_view.register_context('form', ())
+        except TypeError as e:
+            self.assertIsNotNone(e)
+
+    def test_register_context_method(self):
+        my_model_view.register_context('form', {'key': 'value'})
+        self.assertIsInstance(my_model_view._view_ctx['form'], ViewContext)
+
+    def test_render_method_raises_error_if_context_not_available(self):
+        try:
+            my_model_view.render('error')
+        except KeyError as e:
+            self.assertIsNotNone(e)
+
+    def test_get_render_for_context_method(self):
+        new_view = ModelViewProxy(Labeled)
+        new_view.register_context('form', {'key': 'value'})
+
+        try:
+            new_view.render('form')
+        except KeyError as e:
+            self.assertIsNotNone(e)
+
+    def test_render_method_on_valid_context(self):
+        # add a render method to our form context
+        my_model_view._view_ctx['form'].update({ 'render': lambda: 'It works'})
+        self.assertEqual(my_model_view.render('form'), 'It works')
 

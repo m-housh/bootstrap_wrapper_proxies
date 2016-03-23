@@ -1,12 +1,20 @@
 from unittest import TestCase
 
 from proxies import SchemaKey, SchemaMap, SchemaLabelProtocol
+from proxies.core import BaseDict
 
 id_key = SchemaKey(id='Id')
 person_key = SchemaKey(fn='First Name', ln='Last Name')
 
 person_map = SchemaMap(id_key, person_key)
 child_map = person_map.new_child()
+
+
+class CoreTestCase(TestCase):
+    def test_base_dict_update_returns_dict(self):
+        dic = BaseDict(id='Id')
+        self.assertDictEqual(dic.update({'id': 'New Id'}), {'id': 'New Id'})
+        
 
 class SchemaMapTestCase(TestCase):
 
