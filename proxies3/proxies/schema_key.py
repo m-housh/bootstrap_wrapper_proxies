@@ -1,25 +1,25 @@
 """
     proxies3.proxies.schema_key
 """
-from collections import ChainMap
+from .core import BaseDict, BaseChainMap
 
-class BaseDict(dict):
-    def update(self, kwargs):
-        super().update(kwargs)
-        return self
+class SchemaKey(BaseDict):
+    """ A dict object that the keys should map to model attributes and values should be
+        a human friendly label to be used in a view context (form, table, etc.)
 
-class SchemaKey(dict):
+        On updates it returns self instead of None to be able to chain methods together.
+    """    
+    pass
    
-    def update(self, kwargs):
-        super().update(kwargs)
-        return self
-
-class SchemaMap(ChainMap):
-
-    def update(self, kwargs):
-        super().update(kwargs)
-        return self
-
+class SchemaMap(BaseChainMap):
+    """ A ChainMap object that chains dict's together.  This allows us to declare a SchemaKey
+        on a model mixin and chain those values to models that use the mixin.  This gives
+        each model a new context, so that changing values on a model does not change them
+        for every other model that uses that key, unless specifically changed on the base
+        model/mixin during class creation.  If key get's changed after class creation then
+        it only get's updated in that context. (see tests for more details).
+    """
+    pass
 
 class SchemaLabelMeta(type):
     """ SchemaLabelMeta enforces all classes that implement SchemaLabelProtocol have
@@ -36,9 +36,9 @@ class SchemaLabelMeta(type):
         maps = []
         # get the label maps from the bases if applicable
         for base in bases:
-            if hasattr(base, '_labels'):
+            if hasattr(base, 'labels'):
                 # get all the maps from base classes
-                maps += [_map for _map in base._labels.maps \
+                maps += [_map for _map in base.labels.maps \
                         if _map not in maps and _map not in labels.maps]
         # update our SchemaMap instance with base class values
         if len(maps) > 0:
@@ -51,32 +51,25 @@ class SchemaLabelMeta(type):
         # attribute, however enforce on sub-classes of base class ('SchemaLabelProtocol')
         if name != 'SchemaLabelProtocol':
             error = True
-            if hasattr(cls, '_labels'):
-                if isinstance(cls._labels, SchemaMap):
+            if hasattr(cls, 'labels'):
+                if isinstance(cls.labels, SchemaMap):
                     error = False
-                    labels.update(cls._labels)
-                if isinstance(cls._labels, SchemaKey):
-                    labels.maps.append(cls._labels)
+                    labels.update(cls.labels)
+                if isinstance(cls.labels, SchemaKey):
+                    labels.maps.append(cls.labels)
                     error = False
-                elif isinstance(cls._labels, dict):
-                    labels.maps.append(SchemaKey(cls._labels))
+                elif isinstance(cls.labels, dict):
+                    labels.maps.append(SchemaKey(cls.labels))
                     error = False
                 # set labels on the new class
-                cls._labels = labels
+                cls.labels = labels
             # error if not implemented for a sub-class
             if error is True:
                 raise NotImplementedError('_labels attr is not implemented for \'{}\''\
                         .format(name))
 
         return type.__init__(cls, name, bases, attrs)
-
-    @property
-    def labels(self):
-        """ Make _labels accessible in a more friendly way, this is on the meta-class,
-            so it's not accessible from instances without calling type(instance)
-        """
-        return self._labels
-
+    
 class SchemaLabelProtocol(metaclass=SchemaLabelMeta):
-    """ Enforces the _label attribute on sub-classes. """
+    """ Enforces the label attribute on sub-classes. """
     pass

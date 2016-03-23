@@ -4,7 +4,7 @@ from proxies import SchemaLabelProtocol, ModelView
 
 
 class Labeled(SchemaLabelProtocol):
-    _labels = {'id': 'Id'}
+    labels = {'id': 'Id'}
 
 class NotLabeled:
     pass

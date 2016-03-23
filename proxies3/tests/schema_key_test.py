@@ -47,7 +47,7 @@ class SchemaMapTestCase(TestCase):
         id_key['id'] = old_id
 
 class Labels(SchemaLabelProtocol):
-    _labels = SchemaMap(person_key, id_key)
+    labels = SchemaMap(person_key, id_key)
 
 class SchemaLabelProtocolTestCase(TestCase):
 
@@ -61,7 +61,7 @@ class SchemaLabelProtocolTestCase(TestCase):
 
     def test_labels_in_context(self):
         class NewLabels(Labels):
-            _labels = Labels.labels.new_child().update({'id': 'New Id', \
+            labels = Labels.labels.new_child().update({'id': 'New Id', \
                     'fn': 'New First Name', 'ln': 'New Last Name'})
         self.assertEqual(NewLabels.labels['id'], 'New Id')
         self.assertNotEqual(Labels.labels['id'], NewLabels.labels['id'])
@@ -77,11 +77,11 @@ class SchemaLabelProtocolTestCase(TestCase):
         self.assertEqual(Labels.labels['id'], 'Id')
 
         class Test1(SchemaLabelProtocol):
-            _labels = SchemaMap(Labels._labels)
+            labels = SchemaMap(Labels.labels)
         
         # wrong way to update
         class Test2(Test):
-            _labels = Test1._labels.update({'id': 'Test2 Id'})
+            labels = Test1.labels.update({'id': 'Test2 Id'})
 
         self.assertEqual(Test1.labels['id'], Test2.labels['id'])
 
@@ -94,25 +94,25 @@ class SchemaLabelProtocolTestCase(TestCase):
     
     def test_schema_label_meta_transforms_dict_to_schema_map(self):
         class Test(SchemaLabelProtocol):
-            _labels = {'id': 'Id'}
+            labels = {'id': 'Id'}
 
         self.assertIsInstance(Test.labels, SchemaMap)
 
     def test_changes_reflect_if_made_on_base_context(self):
         #class Test(SchemaLabelProtocol):
-        #    _labels = {'id': 'Id'}
+        #    labels = {'id': 'Id'}
 
         class Test(SchemaLabelProtocol):
             """ Mock to show that as long as label is updated at class it get's reflected
                 to sub-classes.
             """
-            _labels = {'id': 'New Id'}
+            labels = {'id': 'New Id'}
 
         class Test1(Test):
-            _labels = {'fn': 'First Name'}
+            labels = {'fn': 'First Name'}
 
         class Test2(Test1):
-            _labels = {'ln': 'Last Name'}
+            labels = {'ln': 'Last Name'}
 
         # this is for commented out Test class.
         #self.assertDictEqual({'id': 'Id', 'fn': 'First Name', 'ln': 'Last Name'}, \

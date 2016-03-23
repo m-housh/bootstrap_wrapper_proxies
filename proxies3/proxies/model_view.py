@@ -2,10 +2,10 @@
     proxies3.proxies.model_view
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
-from collections import ChainMap
+from .core import BaseChainMap
 from .schema_key import SchemaLabelProtocol, SchemaLabelMeta
 
-class ViewContextMap(ChainMap):
+class ViewContextMap(BaseChainMap):
     pass
 
 class ModelView:
