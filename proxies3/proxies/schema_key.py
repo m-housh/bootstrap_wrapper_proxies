@@ -3,6 +3,11 @@
 """
 from collections import ChainMap
 
+class BaseDict(dict):
+    def update(self, kwargs):
+        super().update(kwargs)
+        return self
+
 class SchemaKey(dict):
    
     def update(self, kwargs):

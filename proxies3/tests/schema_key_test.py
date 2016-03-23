@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from proxies.schema_key import SchemaKey, SchemaMap, SchemaLabelProtocol
+from proxies import SchemaKey, SchemaMap, SchemaLabelProtocol
 
 id_key = SchemaKey(id='Id')
 person_key = SchemaKey(fn='First Name', ln='Last Name')
@@ -98,4 +98,30 @@ class SchemaLabelProtocolTestCase(TestCase):
 
         self.assertIsInstance(Test.labels, SchemaMap)
 
+    def test_changes_reflect_if_made_on_base_context(self):
+        #class Test(SchemaLabelProtocol):
+        #    _labels = {'id': 'Id'}
 
+        class Test(SchemaLabelProtocol):
+            """ Mock to show that as long as label is updated at class it get's reflected
+                to sub-classes.
+            """
+            _labels = {'id': 'New Id'}
+
+        class Test1(Test):
+            _labels = {'fn': 'First Name'}
+
+        class Test2(Test1):
+            _labels = {'ln': 'Last Name'}
+
+        # this is for commented out Test class.
+        #self.assertDictEqual({'id': 'Id', 'fn': 'First Name', 'ln': 'Last Name'}, \
+                #dict(Test2.labels))
+        
+        # this doesn't work becaus the class get's a new context after initiated
+        #Test.labels.update({'id': 'New Id'})
+
+        self.assertEqual(Test2.labels['id'], 'New Id')
+        # if updated after class creation it doesn't reflect on sub-classes
+        Test.labels.update({'id': 'Id'})
+        self.assertNotEqual(Test2.labels['id'], Test.labels['id'])
