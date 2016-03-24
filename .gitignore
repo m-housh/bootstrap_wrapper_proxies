@@ -3,4 +3,4 @@ play.py
 
 .coverage
 
-bootstrap_wrapper/*
+bootstrap_wrapper/
