@@ -2,8 +2,9 @@
     proxies3.proxies.model_view
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
-from .core import BaseChainMap, BaseDict
+from .core import BaseChainMap
 from .schema_key import SchemaLabelProtocol, SchemaLabelMeta
+from .contexts import ViewContext
 
 class ViewContextMap(BaseChainMap):
     """ A ChainMap class that maps view contexts on our ModelViewProxy class. Implements
@@ -11,14 +12,6 @@ class ViewContextMap(BaseChainMap):
         necessary.
     """
     pass
-
-class ViewContext(BaseDict):
-    """ A dict object that on update returns self to allow method chaining to be easier.
-        Also will raise an error if a render method is not implemented.
-    """
-    def render(self, *args, **kwargs):
-        raise NotImplementedError('render method not implemented for \'{}\''\
-                .format(self.__class__.__name__))
 
 
 class ModelViewProxy:

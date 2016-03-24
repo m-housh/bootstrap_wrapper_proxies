@@ -20,3 +20,4 @@ class BaseChainMap(ChainMap):
     def update(self, kwargs):
         super().update(kwargs)
         return self
+
