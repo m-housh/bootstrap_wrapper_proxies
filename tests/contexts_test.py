@@ -42,5 +42,10 @@ class ContextsTestCase(TestCase):
         mv = model_view.render('table', model)
 
         self.assertEqual(mv, tv)
+        
+        # test that kwargs get passed on
+        tv = tv.render(inline=True)
+        mv = model_view.render('table', model, inline=True)
+        self.assertEqual(mv, tv)
 
 

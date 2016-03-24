@@ -44,10 +44,15 @@ class TableViewContext(ViewContext):
             *[getattr(model_instance, key) for key in self.labels.keys()], 
             **kwargs))
 
-    def render(self, model_instance, header=True, **kwargs):
+    def render(self, model_instances, header=True, **kwargs):
         if header:
             self.header()
-        self.row(model_instance)
+
+        if isinstance(model_instances, (tuple, list)):
+            for model in model_instances:
+                self.row(model)
+        else:
+            self.row(model_instances)
         
         return self.tag.render(**kwargs)
 
