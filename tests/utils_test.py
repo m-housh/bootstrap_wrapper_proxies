@@ -28,6 +28,6 @@ def UtilTestCase(TestCase):
 
 
     def test_ordered_labels_update_returns_self(self):
-        labels = OrderedLabels(labels, {'fn': 0, 'ln': 1})
-        self.assertIsInstance(labels.update({'id': 'Edit'}), dict)
+        ordered = OrderedLabels(labels, {'fn': 0, 'ln': 1})
+        self.assertEqual(ordered.update({'id': 'Edit'}), ordered)
 
