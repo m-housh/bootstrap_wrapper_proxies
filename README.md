@@ -5,7 +5,7 @@ functionality/tests as I'm using both of these library's in a larger Flask proje
 
 For the moment best way to see how it works is through the tests. But the gist is to have a simple database model proxy to easily create table's and forms for database model's.
 
-To Use - (Not an official python package so the repo needs to be added to your project directory)
+#### To Use - (Not an official python package so the repo needs to be added to your project directory)
 ----
 ```
 git clone http://github.com/m-housh/bootstrap_wrapper.git # a dependency
