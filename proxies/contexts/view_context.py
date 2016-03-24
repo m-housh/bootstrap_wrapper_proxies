@@ -16,9 +16,12 @@ class ViewContext(BaseViewContext):
     def __init__(self, *args, model=None, labels=None, label_order=None, **kwargs):
         self.model = model
         self.label_order = label_order or {}
+        if labels is None:
+            labels = {}
 
         self.labels = OrderedLabels(labels, self.label_order)
-
+        
+        # this should probably be moved to a meta class
         if not isclass(self.tag):
             self.tag = self.tag.__class__
 

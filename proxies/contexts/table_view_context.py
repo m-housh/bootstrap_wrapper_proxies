@@ -33,7 +33,7 @@ class TableViewContext(ViewContext):
         if tag_kwargs is not None:
             if not isinstance(tag_kwargs, dict):
                 # error
-                pass
+                raise TypeError('tag_kwargs must be dict')
         else:
             tag_kwargs = {}
 
