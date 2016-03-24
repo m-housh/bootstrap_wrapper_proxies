@@ -6,7 +6,7 @@ from inspect import isclass
 
 
 from .core import BaseChainMap, BaseViewContext
-from .schema_key import SchemaLabelProtocol, SchemaLabelMeta
+from .schema_helpers import SchemaLabelProtocol, SchemaLabelMeta
 
 
 class ViewContextMap(BaseChainMap):
