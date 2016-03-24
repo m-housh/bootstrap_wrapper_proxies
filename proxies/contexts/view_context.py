@@ -21,7 +21,7 @@ class ViewContext(BaseViewContext):
 
         self.labels = OrderedLabels(labels, self.label_order)
         
-        # this should probably be moved to a meta class
+        # :TODO: this should probably be moved to a meta class
         if not isclass(self.tag):
             self.tag = self.tag.__class__
 
