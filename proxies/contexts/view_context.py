@@ -2,10 +2,10 @@
     proxies.contexts
     ~~~~~~~~~~~~~~~~
 """
-from proxies.core import BaseViewContext
-from proxies.utils import OrderedLabels
+from ..core import BaseViewContext
+from ..utils import OrderedLabels
 
-from bootstrap_wrapper import Div
+from ...bootstrap_wrapper import Div
 from inspect import isclass
 
 class ViewContext(BaseViewContext):

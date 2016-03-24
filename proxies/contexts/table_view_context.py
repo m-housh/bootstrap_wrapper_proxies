@@ -2,7 +2,7 @@
     proxies.contexts.table_view_context
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
-from bootstrap_wrapper import Table, TableHeader, TableRow, ResponsiveTable
+from ...bootstrap_wrapper import Table, TableHeader, TableRow, ResponsiveTable
 from .view_context import ViewContext
 
 class TableViewContext(ViewContext):
