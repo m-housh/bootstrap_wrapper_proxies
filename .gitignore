@@ -2,3 +2,5 @@ play.py
 *.un~
 
 .coverage
+
+bootstrap_wrapper/*
