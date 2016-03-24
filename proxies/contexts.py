@@ -5,7 +5,7 @@
 from .core import BaseViewContext
 from .utils import OrderedLabels
 
-from bootstrap_wrapper import Table, Div, TableHeader, TableRow
+from bootstrap_wrapper import Table, Div, TableHeader, TableRow, ResponsiveTable
 from inspect import isclass
 
 class ViewContext(BaseViewContext):
@@ -19,42 +19,69 @@ class ViewContext(BaseViewContext):
 
         self.labels = OrderedLabels(labels, self.label_order)
 
-        if isclass(self.tag):
-            self.tag = self.tag()
+        if not isclass(self.tag):
+            self.tag = self.tag.__class__
 
+    def render(self, *args, tag_kwargs=None, **kwargs):
+        if not tag_kwargs:
+            tag_kwargs = {}
 
-    def add(self, *args, **kwargs):
-        return self.tag.add(*args, **kwargs)
+        tag = self.tag(**tag_kwargs)
 
-    def render(self, *args, **kwargs):
-        return self.tag.render(*args, **kwargs)
+        return tag.render(*args, **kwargs)
 
 
 class TableViewContext(ViewContext):
-    tag = Table
-    
+    tag = ResponsiveTable
+   
+    def __init__(self, *args, responsive=True, bordered=False, striped=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not responsive:
+            self.tag = Table
+
+        self.bordered = bordered
+        self.striped = striped
+
+
     def header(self, **kwargs):
-        return self.tag.add(TableHeader(
+        return TableHeader(
             *self.labels.values(),
-            **kwargs))
+            **kwargs)
 
     
     def row(self, model_instance, *args, **kwargs):
-        return self.tag.add(TableRow(
+        return TableRow(
             *[getattr(model_instance, key) for key in self.labels.keys()], 
-            **kwargs))
+            **kwargs)
 
-    def render(self, model_instances, header=True, **kwargs):
+    def render(self, model_instances, header=True, tag_kwargs=None, **kwargs):
+        tag = None
+        if tag_kwargs is not None:
+            if not isinstance(tag_kwargs, dict):
+                # error
+                pass
+        else:
+            tag_kwargs = {}
+
+        if self.tag is ResponsiveTable:
+            tag = self.tag()
+        
+        bordered = tag_kwargs.pop('bordered', self.bordered)
+        striped = tag_kwargs.pop('striped', self.striped)
+        table = Table(bordered=bordered, striped=striped, **tag_kwargs)
         if header:
-            self.header()
+            table.add(self.header())
 
         if isinstance(model_instances, (tuple, list)):
             for model in model_instances:
-                self.row(model)
+                table.add(self.row(model))
         else:
-            self.row(model_instances)
+            table.add(self.row(model_instances))
         
-        return self.tag.render(**kwargs)
+        if tag is not None:
+            tag.add(table)
+            return tag.render(**kwargs)
+        return table.render(**kwargs)
 
 
 

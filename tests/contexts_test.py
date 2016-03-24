@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from proxies import BaseViewContext, OrderedLabels, TableViewContext, SchemaLabelProtocol, \
         ModelViewProxy
-from bootstrap_wrapper import Table, TableHeader, TableRow
+from bootstrap_wrapper import Table, TableHeader, TableRow, ResponsiveTable
 
 class Model(SchemaLabelProtocol):
     labels = { 'id': 'Id', 'name': 'Name', 'email': 'Email' }
@@ -32,20 +32,37 @@ class ContextsTestCase(TestCase):
     def test_table_view_context(self):
         model = Model()
         model_view.register_context('table', TableViewContext, 
-                label_order={'name': 0, 'id': -1 })
+                label_order={'name': 0, 'id': -1 }, responsive=False)
 
-        tv = Table(TableHeader(
+        test_v = Table(TableHeader(
             *(Model.labels['name'], Model.labels['email'], Model.labels['id'])),
             TableRow(model.name, model.email, model.id))
         
-        tv = tv.render()
+        tv = test_v.render()
         mv = model_view.render('table', model)
 
         self.assertEqual(mv, tv)
         
         # test that kwargs get passed on
-        tv = tv.render(inline=True)
+        tv = test_v.render(inline=True)
         mv = model_view.render('table', model, inline=True)
         self.assertEqual(mv, tv)
+        
+        # test responsive table works this is the default setting for TableViewContext
+        model_view.register_context('table-responsive', TableViewContext, 
+                label_order={'name': 0, 'id': -1})
+        r_test_v = ResponsiveTable(test_v)
+        tv = r_test_v.render()
+        mv = model_view.render('table-responsive', model)
+
+        self.assertEqual(mv, tv)
+
+        # test header doesn't get rendered
+        test_v = Table(TableRow(
+            model.name, model.email, model.id))
+        tv = test_v.render()
+        mv = model_view.render('table', model, header=False)
+        self.assertEqual(mv, tv)
+
 
 
