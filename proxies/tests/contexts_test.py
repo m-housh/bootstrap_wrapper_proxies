@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from proxies import ViewContext, LabelOrder
+from proxies import BaseViewContext, OrderedLabels
 
 class ContextsTestCase(TestCase):
 
@@ -10,7 +10,7 @@ class ContextsTestCase(TestCase):
 
 
     def test_render_raises_error_in_view_context_if_not_implemented(self):
-        v = ViewContext()
+        v = BaseViewContext()
         try:
             v.render()
         except NotImplementedError as e:
@@ -18,7 +18,7 @@ class ContextsTestCase(TestCase):
 
     def test_label_order(self):
         labels = {'fn': 'First Name','id': 'Id', 'email': 'Email', 'ln': 'Last Name'}
-        ordered = LabelOrder(labels, {'fn': 0, 'ln': 1,  'id': -1 , 'email': -2})
+        ordered = OrderedLabels(labels, {'fn': 0, 'ln': 1,  'id': -1 , 'email': -2})
         count = 0
         for k, v in ordered.items():
             print(k, v, count)

@@ -2,9 +2,8 @@
     proxies3.proxies.model_view
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
-from .core import BaseChainMap
+from .core import BaseChainMap, BaseViewContext
 from .schema_key import SchemaLabelProtocol, SchemaLabelMeta
-from .contexts import ViewContext
 
 class ViewContextMap(BaseChainMap):
     """ A ChainMap class that maps view contexts on our ModelViewProxy class. Implements
@@ -50,8 +49,9 @@ class ModelViewProxy:
 
 
     def register_context(self, key, context):
-        if not isinstance(context, ViewContext) and isinstance(context, dict):
-            context = ViewContext(context)
+        # :TODO: update this to only check for a render method on the context.
+        if not isinstance(context, BaseViewContext) and isinstance(context, dict):
+            context = BaseViewContext(context)
         elif not hasattr(context, 'render'):
             raise TypeError('context must implement a render method')
 

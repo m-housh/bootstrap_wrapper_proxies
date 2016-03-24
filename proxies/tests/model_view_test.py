@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from proxies import SchemaLabelProtocol, ModelViewProxy, ViewContext
+from proxies import SchemaLabelProtocol, ModelViewProxy, BaseViewContext
 
 
 class Labeled(SchemaLabelProtocol):
@@ -47,7 +47,7 @@ class ModelViewTestCase(TestCase):
 
     def test_register_context_method(self):
         my_model_view.register_context('form', {'key': 'value'})
-        self.assertIsInstance(my_model_view._view_ctx['form'], ViewContext)
+        self.assertIsInstance(my_model_view._view_ctx['form'], BaseViewContext)
 
     def test_render_method_raises_error_if_context_not_available(self):
         try:
