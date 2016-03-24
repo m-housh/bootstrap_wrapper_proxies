@@ -20,9 +20,8 @@ class BaseChainMap(ChainMap):
         super().update(kwargs)
         return self
 
-class BaseViewContext(BaseDict):
-    """ A dict object that on update returns self to allow method chaining to be easier.
-        Also will raise an error if a render method is not implemented.
+class BaseViewContext:
+    """ An object that will raise an error if a render method is not implemented.
     """
     def render(self, *args, **kwargs):
         raise NotImplementedError('render method not implemented for \'{}\''\

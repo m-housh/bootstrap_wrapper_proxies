@@ -16,18 +16,20 @@ class OrderedLabels(OrderedDict):
         moving a certain key to the end of the order.
     """
     def __init__(self, labels, order_kwargs):
-        # get all the orders that are negative numbers
-        negatives = sorted([ (k, v) for k, v in order_kwargs.items() if v < 0 ])
-        # get all the orders that are positve numbers
-        positives = sorted([ (k, v) for k, v in order_kwargs.items() if v >= 0 ])
-        # combine the keys that are already accounted for in the lists
-        accounted_for_keys = [ k[0] for k in negatives ] + [ k[0] for k in positives ]
-        # check for any left over keys and add them to the positives
-        for key in labels.keys():
-            if key not in accounted_for_keys:
-                positives.append((key, positives[-1][1] + 1))
-        # initialize an ordered dict with the key,values in the right order
-        super().__init__([ (k, labels[k]) for k, _ in positives + negatives ])
+        if len(order_kwargs) > 0:
+            # get all the orders that are negative numbers
+            negatives = sorted([ (k, v) for k, v in order_kwargs.items() if v < 0 ])
+            # get all the orders that are positve numbers
+            positives = sorted([ (k, v) for k, v in order_kwargs.items() if v >= 0 ])
+            # combine the keys that are already accounted for in the lists
+            accounted_for_keys = [ k[0] for k in negatives ] + [ k[0] for k in positives ]
+            # check for any left over keys and add them to the positives
+            for key in labels.keys():
+                if key not in accounted_for_keys:
+                    positives.append((key, positives[-1][1] + 1))
+            # initialize an ordered dict with the key,values in the right order
+            super().__init__([ (k, labels[k]) for k, _ in positives + negatives ])
+        super().__init__(labels)
     
     def update(self, kwargs):
         """ Returns self instead of None on update to allow methods to be chained. """
