@@ -4,7 +4,7 @@ from proxies import OrderedLabels
 
 labels = {'fn': 'First Name','id': 'Id', 'email': 'Email', 'ln': 'Last Name'}
 
-def UtilTestCase(TestCase):
+class UtilTestCase(TestCase):
 
     def test_sanity(self):
         self.assertEqual(2, 2)

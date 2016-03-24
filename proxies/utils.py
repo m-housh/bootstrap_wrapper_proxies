@@ -1,6 +1,6 @@
 """
-    proxies3.proxies.utils
-    ~~~~~~~~~~~~~~~~~~~~~~
+    proxies.utils
+    ~~~~~~~~~~~~~
 """
 from collections import OrderedDict
 

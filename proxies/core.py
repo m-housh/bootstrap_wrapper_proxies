@@ -1,7 +1,6 @@
 """
-    proxies3.proxies.core
-    ~~~~~~~~~~~~~~~~~~~~
-
+    proxies.core
+    ~~~~~~~~~~~~
 """
 from collections import ChainMap
 

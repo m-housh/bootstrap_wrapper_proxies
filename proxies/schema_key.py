@@ -1,5 +1,6 @@
 """
-    proxies3.proxies.schema_key
+    proxies.schema_key
+    ~~~~~~~~~~~~~~~~~
 """
 from .core import BaseDict, BaseChainMap
 
@@ -47,7 +48,7 @@ class SchemaLabelMeta(type):
                 labels.update(_map)
             # insert a new context in the front of our labels
             labels.maps.insert(0, {})
-        # allow base class to not throw errors if it does not have a _labels
+        # allow base class to not throw errors if it does not have a labels
         # attribute, however enforce on sub-classes of base class ('SchemaLabelProtocol')
         if name != 'SchemaLabelProtocol':
             error = True

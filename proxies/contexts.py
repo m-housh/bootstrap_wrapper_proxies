@@ -1,14 +1,16 @@
 """
-    proxies3.proxies.contexts
-    ~~~~~~~~~~~~~~~~~~~~~~~~~
+    proxies.contexts
+    ~~~~~~~~~~~~~~~~
 """
 from .core import BaseViewContext
 
-class TableViewContext(BaseViewContext):
+class ViewContext(BaseViewContext):
+    """ A view context wrapper around an bootstrap_wrapper html_tag. """
+    def __init__(self, html_tag, *args, **kwargs):
+        self.tag = html_tag
 
-    def header_row(self):
-        pass
+    def add(self, *args, **kwargs):
+        return self.tag.add(*args, **kwargs)
 
-    def table_row(self):
-        pass
-
+    def render(self, *args, **kwargs):
+        return self.tag.render(*args, **kwargs)

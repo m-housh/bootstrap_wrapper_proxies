@@ -45,9 +45,11 @@ class ModelViewTestCase(TestCase):
         except TypeError as e:
             self.assertIsNotNone(e)
 
-    def test_register_context_method(self):
-        my_model_view.register_context('form', {'key': 'value'})
-        self.assertIsInstance(my_model_view._view_ctx['form'], BaseViewContext)
+    def test_register_context_errors_without_render_method(self):
+        try:
+            my_model_view.register_context('form', {'key': 'value'})
+        except TypeError as e:
+            self.assertIsNotNone(e)
 
     def test_render_method_raises_error_if_context_not_available(self):
         try:
@@ -57,15 +59,15 @@ class ModelViewTestCase(TestCase):
 
     def test_get_render_for_context_method(self):
         new_view = ModelViewProxy(Labeled)
-        new_view.register_context('form', {'key': 'value'})
+        new_view.register_context('form', {'key': 'value', 'render': lambda: 'It works'})
 
         try:
-            new_view.render('form')
+            new_view.render('table')
         except KeyError as e:
             self.assertIsNotNone(e)
 
     def test_render_method_on_valid_context(self):
         # add a render method to our form context
-        my_model_view._view_ctx['form'].update({ 'render': lambda: 'It works'})
+        my_model_view.register_context('form', { 'render': lambda: 'It works' })
         self.assertEqual(my_model_view.render('form'), 'It works')
 

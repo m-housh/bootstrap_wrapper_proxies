@@ -117,7 +117,7 @@ class SchemaLabelProtocolTestCase(TestCase):
             labels = {'id': 'New Id'}
 
         class Test1(Test):
-            labels = {'fn': 'First Name'}
+            labels = SchemaKey({'fn': 'First Name'})
 
         class Test2(Test1):
             labels = {'ln': 'Last Name'}

@@ -1,6 +1,6 @@
 """
-    proxies3.proxies.model_view
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    proxies.model_view
+    ~~~~~~~~~~~~~~~~~~
 """
 from .core import BaseChainMap, BaseViewContext
 from .schema_key import SchemaLabelProtocol, SchemaLabelMeta
@@ -49,14 +49,15 @@ class ModelViewProxy:
 
 
     def register_context(self, key, context):
-        # :TODO: update this to only check for a render method on the context.
-        if not isinstance(context, BaseViewContext) and isinstance(context, dict):
+        # not sure I need to do this, possibly just check for a render attribute and
+        # that the render attribute is callable
+        if not isinstance(context, BaseViewContext):
+            # coerce context into a BaseViewContext class.
             context = BaseViewContext(context)
-        elif not hasattr(context, 'render'):
+
+        if not hasattr(context, 'render'):
             raise TypeError('context must implement a render method')
 
-        # should probably check if key exists in the _view_ctx and add a new_child
-        # if it does
         self._view_ctx.update({ key: context })
 
 
