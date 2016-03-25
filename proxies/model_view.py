@@ -48,7 +48,7 @@ class ModelViewProxy:
             self.model_class = modelClass.__class__
         # set labels with a new context, so any changes don't get reflected on the
         # parent class
-        self.labels = self.model_class.labels.new_child()
+        self.labels = self.model_class.labels
         self._view_ctx = ViewContextMap({'labels': self.labels})
 
 
@@ -67,6 +67,11 @@ class ModelViewProxy:
                     model=self.model_class, 
                     labels=self.labels.new_child(),
                     **kwargs)
+
+        #:TODO: need to do something here if the context is not a class but a callable.
+        
+        
+        
         # not sure I need to do this, possibly just check for a render attribute and
         # that the render attribute is callable
         '''

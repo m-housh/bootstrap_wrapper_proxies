@@ -34,9 +34,17 @@ class ModelViewTestCase(TestCase):
 
     def test_model_view_attributes(self):
         self.assertEqual(my_model_view.labels, Labeled.labels)
+        self.assertEqual(my_model_view.model_class, Labeled)
+
         # test that the model_view get's it's own context for labels
-        my_model_view.labels.update({'id': 'New Id'})
-        self.assertNotEqual(Labeled.labels['id'], my_model_view.labels['id'])
+        # I'm rethinking a new context at the model_view level.  I feel the new
+        # context should be at the context level, so that a model view will inherit
+        # all changes made to base class's but any override in a view context will
+        # only affect that view context, so commenting out the next part of this test
+
+        #my_model_view.labels.update({'id': 'New Id'})
+        #self.assertNotEqual(Labeled.labels['id'], my_model_view.labels['id'])
+
         self.assertEqual(my_model_view._view_ctx['labels'], my_model_view.labels)
     
     def test_register_context_method_raises_error_if_context_not_dict(self):
