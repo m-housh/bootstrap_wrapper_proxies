@@ -47,8 +47,8 @@ class TableViewContextTestCase(TestCase):
         self.assertEqual(mv, tv)
 
     def test_render_kwargs_get_passed_through(self):
-        mv = model_view.render('table', model, inline=True)
-        tv = test_table_with_header.render(inline=True)
+        mv = model_view.render('table', model, pretty=True)
+        tv = test_table_with_header.render(pretty=True)
         self.assertEqual(mv, tv)
 
     def test_render_with_list_of_model_instances(self):
@@ -61,10 +61,7 @@ class TableViewContextTestCase(TestCase):
 
 
     def test_render_with_tag_kwargs_raises_error_if_not_dict(self):
-        try:
-            model_view.render('table', model, tag_kwargs=())
-        except TypeError as e:
-            self.assertIsNotNone(e)
+        self.assertRaises(TypeError, model_view.render, 'table', model, tag_kwargs=())
 
     def test_render_with_tag_kwargs(self):
         test = deepcopy(test_table)

@@ -59,10 +59,7 @@ class TableViewContext(ViewContext):
             # make sure that kwargs is a dict
             if not isinstance(tag_kwargs, dict):
                 # error
-                try:
-                    tag_kwargs = dict(tag_kwargs)
-                except:
-                    raise TypeError('tag_kwargs must be dict')
+                raise TypeError('tag_kwargs must be dict')
         else:
             # if no kwargs make an empty dict object.
             tag_kwargs = {}
