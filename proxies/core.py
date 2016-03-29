@@ -1,29 +1,49 @@
-"""
-    proxies.core
-    ~~~~~~~~~~~~
-"""
 from collections import ChainMap
+from .utils import OrderedLabels
 
 class BaseDict(dict):
-    """ dict wrapper that returns self on update instead of none-type.  This allows us to
-        chain methods together.
-    """
-    def update(self, kwargs):
-        super().update(kwargs)
+    
+    def __getattr__(self, key):
+        """ allow dot style access to key values """
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+    def update(self, *args, **kwargs):
+        super().update(*args, **kwargs)
         return self
 
 class BaseChainMap(ChainMap):
-    """ ChainMap wrapper that returns self on update instead of none-type.  This allows us
-        to chain methods together.
-    """
-    def update(self, kwargs):
-        super().update(kwargs)
+
+    def update(self, *args, **kwargs):
+        super().update(*args, **kwargs)
         return self
 
+
 class BaseViewContext:
-    """ An object that will raise an error if a render method is not implemented.
-    """
-    def render(self, *args, **kwargs):
-        raise NotImplementedError('render method not implemented for \'{}\''\
+    label_order = {}
+
+    def __init__(self, *, model=None, labels=None, label_order=None):
+        if label_order is not None:
+            self.label_order = label_order
+
+        if model is None:
+            raise ValueError('must supply a model_class.')
+        else:
+            self.model = model
+        
+        if labels is None:
+            labels = {}
+
+        self.labels = OrderedLabels(labels, self.label_order)
+
+    def render(self):
+        raise NotImplementedError('render method not implemented for {}'\
                 .format(self.__class__.__name__))
 
+
+class BaseErrorHandler:
+
+    def handle_error(self, error):
+        raise error

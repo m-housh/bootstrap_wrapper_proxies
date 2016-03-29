@@ -3,124 +3,206 @@
     ~~~~~~~~~~~~~~~~~~
 """
 from inspect import isclass
+from .core import BaseViewContext, BaseDict, BaseErrorHandler
+from .schema_helper import SchemaLabelMeta, SchemaLabelProtocol
+from .utils import TypeParser
+from .context_registry import ContextRegistry, InvalidContextError
 
+get_strings = TypeParser(str)
 
-from .core import BaseChainMap, BaseViewContext
-from .schema_helpers import SchemaLabelProtocol, SchemaLabelMeta
-
-
-class ViewContextMap(BaseChainMap):
-    """ A ChainMap class that maps view contexts on our ModelViewProxy class. Implements
-        update which returns self instead of None to make chaining methods easier, if 
-        necessary.
+class BaseModelViewProxy:
+    """ This is the main object that we interact with.  We can register views and group
+        by keys and a sub-key for the view, which allows us to have similar view groups
+        and choose them based on key.sub-key string passed in to the render function.
+        Each view context get's a reference to the db.Model class that it is associated with
+        and a reference to the SchemaLabel's.  All registered view contexts should inherit
+        from BaseViewContext to ensure that they can handle the render method as well
+        as instantiation with the correct kwargs ({'model': ..., 'labels':...}).  A registered
+        view context can be a class(preferrable) or an instance.  If it is class then we
+        will instantiate that class in the render function passing in the db.Model and Labels,
+        then call render on it passing along any args or kwargs to the render function of
+        the view context.  This class also offers a convenience method to make a new context
+        instance from an existing key.sub-key pair, that could then be re-registered with a
+        different sub-key.  This is so if you have a view that's very similar, but needs a
+        little bit different set-up then it can be done easily. The render method does not
+        have to render a view that is registered with this instance, it can also accept
+        an instance of view context and render it with the passed in args and kwargs.
     """
-    pass
 
+    def __init__(self, model_class, *args, **kwargs):
+        if not isinstance(model_class, (SchemaLabelMeta, SchemaLabelProtocol)):
+            if isclass(model_class):
+                name = model_class.__name__
+            else:
+                name = model_class.__class__.__name__
+            raise TypeError("model '{}' does not implement SchemaLabelProtocol"\
+                    .format(name))
 
-class ModelViewProxy:
-    """ A proxy object for a db Model class that allows for view contexts to be added. 
+        if isinstance(model_class, SchemaLabelMeta):
+            self.model_class = model_class
+        elif isinstance(model_class, SchemaLabelProtocol):
+            self.model_class = model_class.__class__
 
-        The class needs to implement SchemaLabelProtocol to supply human readable labels
-        to be rendered in the different view contexts.
-
-        Meant to wrap a class and register different named contexts to be able to
-        easily render different views depending on the context (ex. form, table, etc...).
-        
-        The render method's should be able to handle an instance or list of instances of 
-        the class the ModelViewProxy is associated with and render them in the given
-        context.
-    """
-    #:TODO: offer a method that allows a full context to be passed in at render for instances
-    #       where it doesn't make sense to register a different context on our ModelViewProxy.
-    #       render_with_context(context)
-    def __init__(self, modelClass, **kwargs):
-        if not isinstance(modelClass, (SchemaLabelMeta, SchemaLabelProtocol)):
-            err_msg = 'model \'{}\' does not implement SchemaLabelProtocol.'\
-                    .format(modelClass.__name__)
-            raise TypeError(err_msg)
-        if isinstance(modelClass, SchemaLabelMeta):
-            # if modelClass was passed in as a class it will be an instance of SchemaLabelMeta
-            # set our _modelClass attribute to the passed in class
-            self.model_class = modelClass
-        if isinstance(modelClass, SchemaLabelProtocol):
-            # if modelClass was passed in as in instance we set our our _modelClass attribute
-            # to the instances class
-            self.model_class = modelClass.__class__
-        # set labels with a new context, so any changes don't get reflected on the
-        # parent class
         self.labels = self.model_class.labels
-        self._view_ctx = ViewContextMap({'labels': self.labels})
-
-
-    def register_context(self, key, context, *args, **kwargs):
-        """ Register a context object with this model view. The context should most likely
-            be a class, or a dict like object.  If the context is a class this method
-            will initialize that class passing in a reference to the model_class for this 
-            model_view and will get a labels context passed in.  So the class must
-            accept kwargs for these items it is easiest for these contexts to be a sub-class
-            of ViewContext which accept these arguments by default. Any *args, **kwargs get
-            passed along to the class for instantiation.
-        """ 
-        _context = None
-        if isclass(context):
-            _context = context(*args, 
-                    model=self.model_class, 
-                    labels=self.labels.new_child(),
-                    **kwargs)
-
-        #:TODO: need to do something here if the context is not a class but a callable.
+        self.registerys = BaseDict()
         
-        
-        
-        # not sure I need to do this, possibly just check for a render attribute and
-        # that the render attribute is callable
-        '''
-        if not isinstance(context, BaseViewContext):
-            # coerce context into a BaseViewContext class.
-            context = BaseViewContext(context)
-        ''' 
-        '''
-        if not hasattr(context, 'render'):
-            raise TypeError('context must implement a render method')
-        '''
-        if _context is not None:
-            self._view_ctx.update({ key: _context })
+    def register_context(self, key, sub_key, context):
+        """ Register a sub-context with an existing registry or create a new registry if
+            one does not exist on this instance for the given key. 
+            
+            :param key:         The key for an existing registry or key for a new registry.
+            :param sub_key:     The sub-key for the context being registered. 
+            :param context:     The context to be registered.  Will raise InvalidContextError
+                                if the context does not inherit from BaseViewContext.
+            :returns:           None
+        """
+        # :TODO: these could raise an InvalidContextError if context is invalid type,
+        #        so should register with an error handler when I get that done
+        if key in self.registerys:
+            self.registerys[key][sub_key] = context
         else:
-            # error
-            pass
-
-
-    def _get_ctx(self, context):
-        """ get a context from our _view_ctx mapping. """
-        ctx = None
+            self.registerys[key] = ContextRegistry(sub_key, context)
+        
+    
+    def _get_context_keys(self, args):
+        """ helper to parse args into key, sub-key, error tuple. """
+        key = None
+        sub_key = None
         error = None
-        try:
-            ctx = self._view_ctx[context]
-        except KeyError as e:
-            error = e
+        if isinstance(args, str):
+            strings = [args]
+        else:
+            strings = get_strings(args, list)
+        if len(strings) > 0:
+            if len(strings) == 1:
+                if '.' in strings[0]:
+                    split = strings[0].split('.')
+                    key, sub_key = split
+                else:
+                    key = strings[0]
+            elif len(strings) == 2:
+                key, sub_key = strings
+            elif len(strings) > 2:
+                error = ValueError('too many strings to parse context')
+        else:
+            error = ValueError('must pass in a string to get a context')
 
-        return (ctx, error)
+        return (key, sub_key, error)
 
-    def _get_render_for_context(self, context):
-        """ get a render method for a context. """
-        ctx, error = self._get_ctx(context)
-        render = None
-        if ctx is not None:
-            try:
-                render = ctx.render
-            except KeyError as e:
-                error = e
 
-        return (render, error)
+    def get_context(self, *args):
+        """ Get a context from this instance.  Can either return a sub-context or the entire
+            registery for a key.
+
+            :param args:        Should contain only strings.  Can be (key, sub-key) which
+                                would return a sub-context, (key.sub-key) which would
+                                return a sub-context, or (key) which would return the
+                                registry for that key.
+
+            :returns:           Either sub-context or a registry.
+        """
+        key, sub_key, error = self._get_context_keys(args)
+        if error:
+            raise error
+
+        if key not in self.registerys:
+            raise KeyError(key)
+
+        rv = self.registerys[key]
+        if sub_key is not None:
+            rv = rv.get(sub_key)
+            if rv is None:
+                raise KeyError(sub_key)
+            return rv
+        return rv
+    
+    def init_context(self, key, sub_context, *args, **kwargs):
+        """ A convenience method to instantiate a new context based on a key, sub-key. 
+        
+            :returns:   A new instance of the context asked for 
+        """
+        context_class = self.get_context(key, sub_context)
+        if not isclass(context_class):
+            context_class = context_class.__class__
+
+        kwargs.update({'model': self.model_class, 'labels': self.labels})
+        context = context_class(*args, **kwargs)
+        return context
 
     def render(self, context, *args, **kwargs):
-        """ call render on a given context name. """
-        render, error = self._get_render_for_context(context)
+        """ Render's a context.
+            
+            :param context:     Can be a string with dot-style syntax for key.sub-key context
+                                access, an instance of a context, or a class of a context
+                                that we will instantiate with a Model reference and Label
+                                reference then call render on it with that passed in args and
+                                kwargs.
 
-        if render is None:
-            raise KeyError('{} does not have \'{}\' context or context does not implement \
-                    a render method'\
-                    .format(self.__class__.__name__, context))
+            :param args:        args to be passed on to the context's render method
+            :param kwargs:      kwargs to be passed on to the context's render method
 
-        return render(*args, **kwargs)
+            :returns:           A markupsafe string to be used as a view or context for
+                                an html body.
+        """
+        if isinstance(context, str):
+            key, sub_key, error = self._get_context_keys(context)
+            if error:
+                raise error
 
+            if key is not None and key in self.registerys:
+                if sub_key is not None:
+                    try:
+                        context = self.get_context(key, sub_key)
+                    except KeyError as e:
+                        # should make a sub-key error object
+                        raise e
+                else:
+                    try:
+                        context = self.get_context(key, 'default')
+                    except KeyError:
+                        raise ValueError('invalid sub-key and no default registered')
+            elif key is not None:
+                raise KeyError(key)
+
+        if isclass(context):
+            context = context(**{'model': self.model_class, 'labels': self.labels})
+        return context.render(*args, **kwargs)
+
+
+class ModelViewProxy(BaseModelViewProxy):
+    """ Wraps all of BaseModelViewProxy's methods in an error handler.  That can be registered
+        with this instance.
+    """
+    def __init__(self, model_class, error_handler=None, *args, **kwargs):
+        if error_handler is not None:
+            self.error_handler = error_handler
+        else:
+            self.error_handler = BaseErrorHandler()
+        try:
+            super().__init__(model_class, *args, **kwargs)
+        except TypeError as e:
+            self.error_handler.handle_error(e)
+
+    def register_context(self, *args, **kwargs):
+        try:
+            return super().register_context(*args, **kwargs)
+        except InvalidContextError as e:
+            return self.error_handler.handle_error(e)
+
+    def get_context(self, *args, **kwargs):
+        try:
+            return super().get_context(*args, **kwargs)
+        except KeyError as e:
+            return self.error_handler.handle_error(e)
+    
+    def init_context(self, *args, **kwargs):
+        try:
+            return super().init_context(*args, **kwargs)
+        except Exception as e:
+            return self.error_handler.handle_error(e)
+
+    def render(self, *args, **kwargs):
+        try:
+            return super().render(*args, **kwargs)
+        except Exception as e:
+            return self.error_handler.handle_error(e)

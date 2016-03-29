@@ -3,6 +3,7 @@
     ~~~~~~~~~~~~~
 """
 from collections import OrderedDict
+from functools import wraps
 
 class OrderedLabels(OrderedDict):
     """ An ordered dict object responsible for sorting labels into the correct order
@@ -35,3 +36,36 @@ class OrderedLabels(OrderedDict):
         """ Returns self instead of None on update to allow methods to be chained. """
         super().update(kwargs)
         return self
+
+
+
+class TypeParser:
+
+    def __init__(self, type):
+        self.type = type
+
+    def __call__(self, args, return_type=None):
+        """ return a generator(default), list, or a tuple  for the type. """
+        
+        r_type = {
+                'list': lambda v: list(v),
+                'tuple': lambda v: tuple(v) }.get(return_type, return_type)
+
+        r_value = (t for t in args if isinstance(t, self.type))
+        if r_type is None:
+            # return a generator if no return_type passed in
+            return r_value
+        return r_type(r_value)
+
+
+def get_first(f):
+    """ helper to get the first of a type or return None if none were found """
+    @wraps(f)
+    def get_first_wrapper(args):
+        try:
+            return next(f(args))
+        except StopIteration:
+            return None
+    
+    return get_first_wrapper
+
